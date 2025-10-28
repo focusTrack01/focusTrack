@@ -1,0 +1,1854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <title>FocusTrack - Smart Study Timer & Productivity Hub</title>
+    <meta name="description" content="Stay focused and track your study progress with camera-based focus detection, smart timers, to-do lists, and comprehensive study analytics.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            border-color: hsl(220 10% 88%);
+        }
+
+        :root {
+            --background: 200 5% 97%;
+            --foreground: 220 15% 25%;
+            --border: 220 10% 88%;
+            --card: 0 0% 100%;
+            --card-foreground: 220 15% 25%;
+            --primary: 200 65% 45%;
+            --primary-foreground: 200 5% 98%;
+            --secondary: 220 8% 90%;
+            --secondary-foreground: 220 15% 28%;
+            --muted: 200 10% 92%;
+            --muted-foreground: 220 10% 45%;
+            --accent: 160 15% 88%;
+            --accent-foreground: 160 20% 28%;
+            --destructive: 0 75% 50%;
+            --destructive-foreground: 0 5% 98%;
+            --focus-active: 120 50% 50%;
+            --focus-active-foreground: 120 5% 98%;
+            --focus-lost: 0 75% 55%;
+            --focus-lost-foreground: 0 5% 98%;
+            --session-complete: 45 90% 55%;
+            --session-complete-foreground: 45 10% 15%;
+            --radius: 0.5rem;
+        }
+
+        .dark {
+            --background: 220 20% 12%;
+            --foreground: 0 0% 95%;
+            --border: 220 15% 24%;
+            --card: 220 18% 16%;
+            --card-foreground: 0 0% 95%;
+            --primary: 200 60% 48%;
+            --secondary: 220 16% 24%;
+            --secondary-foreground: 0 0% 92%;
+            --muted: 220 15% 22%;
+            --muted-foreground: 220 10% 70%;
+            --accent: 160 12% 26%;
+            --accent-foreground: 160 15% 85%;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            border-bottom: 1px solid hsl(var(--border));
+            background-color: hsl(var(--background) / 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 0;
+        }
+
+        header .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(to right, hsl(var(--primary)), hsl(var(--accent)));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        h2 {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .digital-clock {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.125rem;
+            color: hsl(var(--muted-foreground));
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+            padding: 0.5rem;
+        }
+
+        button {
+            font-family: inherit;
+            cursor: pointer;
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            padding: 0.5rem 1rem;
+            background-color: hsl(var(--card));
+            color: hsl(var(--foreground));
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: hsl(var(--secondary));
+        }
+
+        button.primary {
+            background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+            border-color: hsl(var(--primary));
+        }
+
+        button.primary:hover {
+            opacity: 0.9;
+        }
+
+        button.destructive {
+            background-color: hsl(var(--destructive));
+            color: hsl(var(--destructive-foreground));
+            border-color: hsl(var(--destructive));
+        }
+
+        button.back-btn {
+            padding: 0.5rem;
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card {
+            background-color: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+            background-color: hsl(var(--card) / 0.8);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            background-color: hsl(var(--secondary));
+            color: hsl(var(--secondary-foreground));
+        }
+
+        .badge.primary {
+            background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+        }
+
+        .badge.success {
+            background-color: hsl(120 50% 50%);
+            color: hsl(120 5% 98%);
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            background-color: hsl(var(--card));
+            color: hsl(var(--foreground));
+            font-family: inherit;
+            font-size: 1rem;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: hsl(var(--primary));
+            box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1);
+        }
+
+        .grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .grid-2 {
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+
+        .grid-4 {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        }
+
+        .grid-3 {
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        }
+
+        main {
+            padding: 2rem 0;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .hero h2 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: hsl(var(--muted-foreground));
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .nav-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .nav-card {
+            text-align: center;
+            cursor: pointer;
+            padding: 1.5rem;
+            border-radius: var(--radius);
+            background-color: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            transition: all 0.3s ease;
+        }
+
+        .nav-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-card-icon {
+            width: 3rem;
+            height: 3rem;
+            margin: 0 auto 1rem;
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .nav-card h3 {
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-card p {
+            font-size: 0.875rem;
+            color: hsl(var(--muted-foreground));
+        }
+
+        .quote-card {
+            font-size: 1.5rem;
+            font-style: italic;
+            font-weight: 300;
+        }
+
+        .quote-mark {
+            font-size: 3rem;
+            color: hsl(var(--primary) / 0.2);
+            font-family: Georgia, serif;
+            line-height: 1;
+        }
+
+        .timer-display {
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 3.5rem;
+            font-weight: bold;
+            margin: 2rem 0;
+        }
+
+        .circular-progress {
+            position: relative;
+            width: 280px;
+            height: 280px;
+            margin: 0 auto 2rem;
+        }
+
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .progress-text .time {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 3.5rem;
+            font-weight: bold;
+        }
+
+        .progress-text .label {
+            font-size: 0.875rem;
+            color: hsl(var(--muted-foreground));
+        }
+
+        .mode-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .mode-option {
+            padding: 1.5rem;
+            border: 2px solid hsl(var(--border));
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .mode-option:hover {
+            transform: translateY(-2px);
+        }
+
+        .mode-option.selected {
+            border-color: hsl(var(--primary));
+            background-color: hsl(var(--primary) / 0.05);
+        }
+
+        .mode-option-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .duration-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .duration-buttons button {
+            padding: 1rem;
+            font-size: 1.125rem;
+            height: 4rem;
+        }
+
+        .duration-buttons button.selected {
+            background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+            border-color: hsl(var(--primary));
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .controls button {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+        }
+
+        .task-form {
+            display: grid;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .task-form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .task-list {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem;
+            background-color: hsl(var(--secondary) / 0.5);
+            border-radius: var(--radius);
+        }
+
+        .task-item.completed {
+            opacity: 0.6;
+        }
+
+        .task-item input[type="checkbox"] {
+            width: auto;
+            margin-top: 0.25rem;
+            cursor: pointer;
+        }
+
+        .task-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .task-title {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .task-item.completed .task-title {
+            text-decoration: line-through;
+            color: hsl(var(--muted-foreground));
+        }
+
+        .task-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .task-delete {
+            padding: 0.5rem;
+            background: none;
+            border: none;
+            color: hsl(var(--destructive));
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .calculator-display {
+            background-color: hsl(var(--secondary));
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            min-height: 8rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+
+        .calculator-equation {
+            font-size: 0.875rem;
+            color: hsl(var(--muted-foreground));
+            font-family: 'JetBrains Mono', monospace;
+            text-align: right;
+            margin-bottom: 0.5rem;
+        }
+
+        .calculator-result {
+            font-size: 2.25rem;
+            font-family: 'JetBrains Mono', monospace;
+            text-align: right;
+            word-break: break-all;
+        }
+
+        .calculator-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+        }
+
+        .calculator-buttons button {
+            padding: 1rem;
+            font-size: 1.125rem;
+            height: 4rem;
+        }
+
+        .calculator-buttons .clear-btn {
+            grid-column: 1 / -1;
+        }
+
+        .calculator-buttons .equals-btn {
+            background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+            border-color: hsl(var(--primary));
+        }
+
+        .calculator-buttons .operator-btn {
+            background-color: hsl(var(--secondary));
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 0.5rem;
+            background-color: hsl(var(--secondary));
+            border-radius: 9999px;
+            overflow: hidden;
+            margin-top: 0.75rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: hsl(var(--primary));
+            transition: width 0.3s ease;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .calendar-header {
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: hsl(var(--muted-foreground));
+            padding: 0.5rem;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            padding: 0.5rem;
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .calendar-day:hover {
+            transform: translateY(-2px);
+        }
+
+        .calendar-day.other-month {
+            opacity: 0.3;
+        }
+
+        .calendar-day.today {
+            border: 2px solid hsl(var(--primary));
+            font-weight: bold;
+            color: hsl(var(--primary));
+        }
+
+        .calendar-day.selected {
+            background-color: hsl(var(--primary) / 0.1);
+        }
+
+        .calendar-day.has-session::after {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0.375rem;
+            height: 0.375rem;
+            background-color: hsl(120 50% 50%);
+            border-radius: 50%;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.5rem;
+            background-color: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+        }
+
+        .stat-content p:first-child {
+            font-size: 0.875rem;
+            color: hsl(var(--muted-foreground));
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-content p:last-child {
+            font-size: 1.875rem;
+            font-weight: bold;
+        }
+
+        .stat-icon {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-buttons button {
+            text-transform: capitalize;
+        }
+
+        .filter-buttons button.active {
+            background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+            border-color: hsl(var(--primary));
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: hsl(var(--muted-foreground));
+        }
+
+        .completion-screen {
+            text-align: center;
+            padding: 3rem 1rem;
+        }
+
+        .completion-icon {
+            font-size: 6rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .completion-screen h2 {
+            color: hsl(var(--session-complete));
+            margin-bottom: 1rem;
+        }
+
+        .completion-screen p {
+            font-size: 1.25rem;
+            color: hsl(var(--muted-foreground));
+            margin-bottom: 2rem;
+        }
+
+        .camera-container {
+            position: relative;
+            border-radius: var(--radius);
+            overflow: hidden;
+            aspect-ratio: 16 / 9;
+            background-color: hsl(var(--secondary));
+            margin-bottom: 1rem;
+            border: 4px solid hsl(var(--focus-active));
+        }
+
+        .camera-container.focus-lost {
+            border-color: hsl(var(--focus-lost));
+            animation: pulse-border 1s infinite;
+        }
+
+        @keyframes pulse-border {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .focus-lost-overlay {
+            position: absolute;
+            inset: 0;
+            background-color: hsl(var(--focus-lost) / 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: hsl(var(--focus-lost-foreground));
+            text-align: center;
+            padding: 1.5rem;
+        }
+
+        .focus-lost-overlay-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .face-detection-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .face-detection-dot {
+            width: 0.75rem;
+            height: 0.75rem;
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+
+        .face-detection-dot.detected {
+            background-color: hsl(var(--focus-active));
+        }
+
+        .face-detection-dot.not-detected {
+            background-color: hsl(var(--focus-lost));
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid hsl(var(--border));
+            color: hsl(var(--muted-foreground));
+            font-size: 0.875rem;
+        }
+
+        .session-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background-color: hsl(var(--secondary) / 0.5);
+            border-radius: var(--radius);
+        }
+
+        .session-info p:first-child {
+            font-size: 0.875rem;
+            color: hsl(var(--muted-foreground));
+            margin-bottom: 0.25rem;
+        }
+
+        .session-duration {
+            text-align: right;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: hsl(var(--primary));
+        }
+
+        @media (max-width: 768px) {
+            .hero h2 {
+                font-size: 2rem;
+            }
+
+            .timer-display {
+                font-size: 2.5rem;
+            }
+
+            .progress-text .time {
+                font-size: 2.5rem;
+            }
+
+            .duration-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .calculator-buttons {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="header-left">
+                    <button class="back-btn" id="backBtn" style="display: none;">←</button>
+                    <h1 id="pageTitle">FocusTrack</h1>
+                </div>
+                <div class="header-left">
+                    <div class="digital-clock" id="digitalClock">00:00</div>
+                    <button class="theme-toggle" id="themeToggle">🌙</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div id="homePage" class="page active">
+            <div class="hero">
+                <h2>Welcome to FocusTrack</h2>
+                <p>Your personal study companion with smart focus tracking and productivity tools</p>
+            </div>
+
+            <div class="grid grid-2" style="margin-bottom: 2rem;">
+                <div class="card quote-card">
+                    <div class="quote-mark">"</div>
+                    <p>Stay focused, the results will follow.</p>
+                </div>
+                <div class="card quote-card">
+                    <div class="quote-mark">"</div>
+                    <p>Discipline beats talent when talent doesn't work hard.</p>
+                </div>
+            </div>
+
+            <div class="nav-cards">
+                <div class="nav-card" onclick="navigateTo('studyPage')">
+                    <div class="nav-card-icon" style="background: linear-gradient(135deg, #0ea5e9, #06b6d4);">📚</div>
+                    <h3>Start Study Session</h3>
+                    <p>Begin a focused study session</p>
+                </div>
+                <div class="nav-card" onclick="navigateTo('tasksPage')">
+                    <div class="nav-card-icon" style="background: linear-gradient(135deg, #22c55e, #10b981);">✓</div>
+                    <h3>To-Do List</h3>
+                    <p>Manage your tasks</p>
+                </div>
+                <div class="nav-card" onclick="navigateTo('knowledgeTreePage')">
+                    <div class="nav-card-icon" style="background: linear-gradient(135deg, #059669, #34d399);">🌳</div>
+                    <h3>Knowledge Tree</h3>
+                    <p>Grow your reading habit</p>
+                </div>
+                <div class="nav-card" onclick="navigateTo('calculatorPage')">
+                    <div class="nav-card-icon" style="background: linear-gradient(135deg, #a855f7, #ec4899);">🧮</div>
+                    <h3>Calculator</h3>
+                    <p>Quick calculations</p>
+                </div>
+                <div class="nav-card" onclick="navigateTo('calendarPage')">
+                    <div class="nav-card-icon" style="background: linear-gradient(135deg, #f97316, #ef4444);">📅</div>
+                    <h3>Study History</h3>
+                    <p>View your progress</p>
+                </div>
+            </div>
+
+            <div class="footer">
+                <p>Built to help students stay focused and achieve their goals</p>
+            </div>
+        </div>
+
+        <div id="studyPage" class="page">
+            <div style="max-width: 800px; margin: 0 auto;">
+                <div id="studySetup">
+                    <div class="card" style="margin-bottom: 2rem;">
+                        <h3 style="margin-bottom: 1rem;">Choose Study Mode</h3>
+                        <div class="mode-selector">
+                            <div class="mode-option selected" onclick="selectMode('normal')">
+                                <div class="mode-option-icon">⏱️</div>
+                                <h4>Normal Timer</h4>
+                                <p style="font-size: 0.875rem; color: hsl(var(--muted-foreground));">Simple countdown timer</p>
+                            </div>
+                            <div class="mode-option" onclick="selectMode('camera')">
+                                <div class="mode-option-icon">📷</div>
+                                <h4>Camera Focus Mode</h4>
+                                <p style="font-size: 0.875rem; color: hsl(var(--muted-foreground));">Monitor with camera</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-bottom: 2rem;">
+                        <h3 style="margin-bottom: 1rem;">Set Duration</h3>
+                        <div class="duration-buttons">
+                            <button onclick="setDuration(25)" class="selected">25 min</button>
+                            <button onclick="setDuration(45)">45 min</button>
+                            <button onclick="setDuration(60)">60 min</button>
+                        </div>
+                    </div>
+
+                    <button class="primary" onclick="startSession()" style="width: 100%; padding: 1rem; font-size: 1.125rem;">
+                        ▶ Start Session
+                    </button>
+                </div>
+
+                <div id="studyRunning" style="display: none;">
+                    <div class="grid grid-2">
+                        <div id="cameraContainer" style="display: none;">
+                            <div class="card">
+                                <h3 style="margin-bottom: 1rem;">📷 Camera Monitor</h3>
+                                <div class="camera-container" id="cameraBox">
+                                    <video id="cameraVideo" autoplay playsinline muted></video>
+                                    <div id="focusLostOverlay" class="focus-lost-overlay" style="display: none;">
+                                        <div>
+                                            <div class="focus-lost-overlay-icon">⚠️</div>
+                                            <h4>Focus Lost!</h4>
+                                            <p>Please return to your study zone</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="face-detection-status">
+                                    <div class="face-detection-dot detected" id="faceDetectionDot"></div>
+                                    <span id="faceDetectionText">Face Detected</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="card">
+                                <div style="text-align: center;">
+                                    <div class="badge primary" style="margin-bottom: 1.5rem;" id="modeLabel">Normal Mode</div>
+                                    
+                                    <div class="circular-progress">
+                                        <svg id="progressSvg" width="280" height="280" style="transform: rotate(-90deg);">
+                                            <circle cx="140" cy="140" r="133" fill="none" stroke="hsl(var(--muted))" stroke-width="14"/>
+                                            <circle id="progressCircle" cx="140" cy="140" r="133" fill="none" stroke="hsl(var(--primary))" stroke-width="14" stroke-dasharray="835" stroke-dashoffset="835" stroke-linecap="round" style="transition: stroke-dashoffset 0.3s ease;"/>
+                                        </svg>
+                                        <div class="progress-text">
+                                            <div class="time" id="timerDisplay">25:00</div>
+                                            <div class="label" id="timerLabel">Remaining</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="controls">
+                                        <button id="pauseResumeBtn" onclick="togglePause()">⏸ Pause</button>
+                                        <button class="destructive" onclick="endSession()">⏹ End</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="studyCompleted" style="display: none;">
+                    <div class="card completion-screen">
+                        <div class="completion-icon">✅</div>
+                        <h2>Session Complete! 🎉</h2>
+                        <p id="completionMessage">Great work! You completed a study session.</p>
+                        <button class="primary" onclick="resetStudySession()" style="padding: 0.75rem 1.5rem;">
+                            Start New Session
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tasksPage" class="page">
+            <div style="max-width: 600px; margin: 0 auto;">
+                <div class="card" style="margin-bottom: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <span style="font-size: 0.875rem; font-weight: 500;">Progress</span>
+                        <span style="font-size: 0.875rem; color: hsl(var(--muted-foreground));" id="progressText">0 of 0 tasks completed</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom: 1.5rem;">
+                    <h3 style="margin-bottom: 1rem;">Add New Task</h3>
+                    <div class="task-form">
+                        <input type="text" id="taskTitle" placeholder="Task title..." onkeypress="if(event.key==='Enter') addTask()">
+                        <div class="task-form-row">
+                            <input type="text" id="taskCategory" placeholder="Category (e.g., Math, Science)">
+                            <input type="date" id="taskDueDate"> 
+                        </div>
+                        <button class="primary" onclick="addTask()" style="width: 100%;">+ Add Task</button>
+                    </div>
+                </div>
+
+                <div class="filter-buttons">
+                    <button class="active" onclick="filterTasks('all')">all</button>
+                    <button onclick="filterTasks('active')">active</button>
+                    <button onclick="filterTasks('completed')">completed</button>
+                </div>
+
+                <div class="task-list" id="taskList"></div>
+            </div>
+        </div>
+
+        <div id="calculatorPage" class="page">
+            <div style="max-width: 400px; margin: 0 auto;">
+                <div class="card">
+                    <div class="calculator-display">
+                        <div class="calculator-equation" id="calcEquation"></div>
+                        <div class="calculator-result" id="calcDisplay">0</div>
+                    </div>
+
+                    <div class="calculator-buttons">
+                        <button class="clear-btn" onclick="calcClear()">Clear</button>
+                        <button onclick="calcNumber('7')">7</button>
+                        <button onclick="calcNumber('8')">8</button>
+                        <button onclick="calcNumber('9')">9</button>
+                        <button class="operator-btn" onclick="calcOperator('÷')">÷</button>
+                        <button onclick="calcNumber('4')">4</button>
+                        <button onclick="calcNumber('5')">5</button>
+                        <button onclick="calcNumber('6')">6</button>
+                        <button class="operator-btn" onclick="calcOperator('×')">×</button>
+                        <button onclick="calcNumber('1')">1</button>
+                        <button onclick="calcNumber('2')">2</button>
+                        <button onclick="calcNumber('3')">3</button>
+                        <button class="operator-btn" onclick="calcOperator('-')">-</button>
+                        <button onclick="calcNumber('0')">0</button>
+                        <button onclick="calcDecimal()">.</button>
+                        <button class="equals-btn" onclick="calcEquals()">=</button>
+                        <button class="operator-btn" onclick="calcOperator('+')">+</button>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 2rem; color: hsl(var(--muted-foreground)); font-size: 0.875rem;">
+                    <p>Quick calculations for your study needs</p>
+                </div>
+            </div>
+        </div>
+        
+        <div id="knowledgeTreePage" class="page">
+            <div style="max-width: 800px; margin: 0 auto;">
+                <div class="card" style="text-align: center; margin-bottom: 2rem;">
+                    <h2 style="margin-bottom: 1rem;">🌳 Grow Your Knowledge Tree</h2>
+                    <p style="color: hsl(var(--muted-foreground)); margin-bottom: 2rem;">
+                        The longer you read, the bigger your tree grows!
+                    </p>
+
+                    <div id="treeVisualContainer" style="margin-bottom: 2rem; padding: 2rem; background-color: hsl(var(--muted)); border-radius: var(--radius);">
+                        <div id="treeStatus" style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem;">
+                            Seedling (0 mins total)
+                        </div>
+                        <div style="font-size: 5rem;" id="treeIcon">🌱</div>
+                        <div class="progress-bar" style="margin-top: 1.5rem;">
+                            <div class="progress-fill" id="treeGrowthFill" style="width: 0%; background-color: hsl(var(--focus-active));"></div>
+                        </div>
+                    </div>
+
+                    <div class="circular-progress">
+                        <svg id="treeProgressSvg" width="280" height="280" style="transform: rotate(-90deg);">
+                            <circle cx="140" cy="140" r="133" fill="none" stroke="hsl(var(--muted))" stroke-width="14"/>
+                            <circle id="treeProgressCircle" cx="140" cy="140" r="133" fill="none" stroke="hsl(var(--focus-active))" stroke-width="14" stroke-dasharray="835" stroke-dashoffset="835" stroke-linecap="round" style="transition: stroke-dashoffset 0.3s ease;"/>
+                        </svg>
+                        <div class="progress-text">
+                            <div class="time" id="treeTimerDisplay">00:00</div>
+                            <div class="label" id="treeTimerLabel">Current Session</div>
+                        </div>
+                    </div>
+
+                    <div class="controls">
+                        <button class="primary" id="treeStartBtn" onclick="toggleTreeSession()">▶ Start Reading</button>
+                        <button id="treeResetBtn" onclick="resetTreeSession()" style="display: none;">↩ Reset Tree</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div id="calendarPage" class="page">
+            <div style="max-width: 1000px; margin: 0 auto;">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <p>This Week</p>
+                            <p id="weekTotal">0h 0m</p>
+                        </div>
+                        <div class="stat-icon" style="background-color: hsl(var(--primary) / 0.1); color: hsl(var(--primary));">⏱️</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <p>This Month</p>
+                            <p id="monthTotal">0h 0m</p>
+                        </div>
+                        <div class="stat-icon" style="background-color: hsl(var(--accent) / 0.1); color: hsl(var(--accent-foreground));">📅</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <p>Total Sessions</p>
+                            <p id="totalSessions">0</p>
+                        </div>
+                        <div class="stat-icon" style="background-color: hsl(120 50% 50% / 0.1); color: hsl(120 50% 50%);">✓</div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom: 2rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2 id="monthYear" style="margin: 0;">January 2024</h2>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button onclick="calendarToday()">Today</button>
+                            <button onclick="calendarPrevMonth()">←</button>
+                            <button onclick="calendarNextMonth()">→</button>
+                        </div>
+                    </div>
+
+                    <div class="calendar-grid" id="calendarGrid"></div>
+                </div>
+
+                <div id="sessionDetails"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // ============ STORAGE ============
+        const storage = {
+            getTasks() {
+                return JSON.parse(localStorage.getItem('tasks') || '[]');
+            },
+            addTask(task) {
+                const tasks = this.getTasks();
+                tasks.push(task);
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+            },
+            updateTask(id, updates) {
+                const tasks = this.getTasks();
+                const task = tasks.find(t => t.id === id);
+                if (task) Object.assign(task, updates);
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+            },
+            deleteTask(id) {
+                const tasks = this.getTasks().filter(t => t.id !== id);
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+            },
+            getSessions() {
+                return JSON.parse(localStorage.getItem('sessions') || '[]');
+            },
+            addSession(session) {
+                const sessions = this.getSessions();
+                sessions.push(session);
+                localStorage.setItem('sessions', JSON.stringify(sessions));
+            },
+            updateSession(id, updates) {
+                const sessions = this.getSessions();
+                const session = sessions.find(s => s.id === id);
+                if (session) Object.assign(session, updates);
+                localStorage.setItem('sessions', JSON.stringify(sessions));
+            }
+        };
+
+        // ============ UTILITIES ============
+        function generateId() {
+            return Math.random().toString(36).substr(2, 9);
+        }
+
+        function formatTime(date) {
+            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+        }
+
+        function formatDate(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        function formatDuration(minutes) {
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            return `${hours}h ${mins}m`;
+        }
+
+        function formatTimeRemaining(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // ============ NAVIGATION ============
+        function navigateTo(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            
+            const backBtn = document.getElementById('backBtn');
+            const pageTitle = document.getElementById('pageTitle');
+            
+            if (pageId === 'homePage') {
+                backBtn.style.display = 'none';
+                pageTitle.textContent = 'FocusTrack';
+            } else {
+                backBtn.style.display = 'flex';
+                const titles = {
+                    'studyPage': 'Study Session',
+                    'tasksPage': 'To-Do List',
+                    'calculatorPage': 'Calculator',
+                    'calendarPage': 'Study History',
+                    'knowledgeTreePage': 'Knowledge Tree' // Added
+                };
+                pageTitle.textContent = titles[pageId] || 'FocusTrack';
+            }
+        }
+
+        document.getElementById('backBtn').addEventListener('click', () => navigateTo('homePage'));
+
+        // ============ THEME ============
+        function initTheme() {
+            const isDark = localStorage.getItem('theme') === 'dark';
+            if (isDark) document.documentElement.classList.add('dark');
+            updateThemeToggle();
+        }
+
+        function updateThemeToggle() {
+            const isDark = document.documentElement.classList.contains('dark');
+            document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
+        }
+
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateThemeToggle();
+        });
+
+        // ============ DIGITAL CLOCK ============
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('digitalClock').textContent = formatTime(now);
+        }
+
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // ============ STUDY SESSION ============
+        let studyState = {
+            mode: 'normal',
+            duration: 25,
+            timeRemaining: 0,
+            isRunning: false,
+            isPaused: false,
+            currentSession: null,
+            focusLost: false,
+            intervalId: null,
+            faceDetected: false
+        };
+
+        function selectMode(mode) {
+            studyState.mode = mode;
+            document.querySelectorAll('.mode-option').forEach(el => el.classList.remove('selected'));
+            event.target.closest('.mode-option').classList.add('selected');
+        }
+
+        function setDuration(mins) {
+            studyState.duration = mins;
+            document.querySelectorAll('.duration-buttons button').forEach(btn => btn.classList.remove('selected'));
+            event.target.classList.add('selected');
+        }
+
+        function startSession() {
+            studyState.currentSession = {
+                id: generateId(),
+                mode: studyState.mode,
+                duration: studyState.duration,
+                startTime: new Date().toISOString(),
+                completed: false,
+                date: formatDate(new Date())
+            };
+            
+            studyState.timeRemaining = studyState.duration * 60;
+            studyState.isRunning = true;
+            studyState.isPaused = false;
+            
+            storage.addSession(studyState.currentSession);
+            
+            document.getElementById('studySetup').style.display = 'none';
+            document.getElementById('studyRunning').style.display = 'block';
+            document.getElementById('studyCompleted').style.display = 'none';
+            
+            if (studyState.mode === 'camera') {
+                document.getElementById('cameraContainer').style.display = 'block';
+                startCamera();
+            } else {
+                document.getElementById('cameraContainer').style.display = 'none';
+            }
+            
+            document.getElementById('modeLabel').textContent = studyState.mode === 'camera' ? 'Camera Mode' : 'Normal Mode';
+            
+            updateTimerDisplay();
+            startTimer();
+        }
+
+        function startTimer() {
+            if (studyState.intervalId) clearInterval(studyState.intervalId);
+            
+            studyState.intervalId = setInterval(() => {
+                if (!studyState.isPaused) {
+                    studyState.timeRemaining--;
+                    updateTimerDisplay();
+                    
+                    if (studyState.timeRemaining <= 0) {
+                        completeSession();
+                    }
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const timeStr = formatTimeRemaining(studyState.timeRemaining);
+            document.getElementById('timerDisplay').textContent = timeStr;
+            
+            const circumference = 2 * Math.PI * 133;
+            const offset = circumference - (((studyState.duration * 60 - studyState.timeRemaining) / (studyState.duration * 60)) * circumference);
+            document.getElementById('progressCircle').style.strokeDashoffset = offset;
+        }
+
+        function togglePause() {
+            studyState.isPaused = !studyState.isPaused;
+            const btn = document.getElementById('pauseResumeBtn');
+            btn.textContent = studyState.isPaused ? '▶ Resume' : '⏸ Pause';
+            document.getElementById('timerLabel').textContent = studyState.isPaused ? 'Paused' : 'Remaining';
+        }
+
+        function endSession() {
+            if (studyState.intervalId) clearInterval(studyState.intervalId);
+            studyState.isRunning = false;
+            
+            if (studyState.currentSession) {
+                storage.updateSession(studyState.currentSession.id, {
+                    completed: false,
+                    endTime: new Date().toISOString()
+                });
+            }
+            
+            resetStudySession();
+        }
+
+        function completeSession() {
+            if (studyState.intervalId) clearInterval(studyState.intervalId);
+            studyState.isRunning = false;
+            
+            if (studyState.currentSession) {
+                storage.updateSession(studyState.currentSession.id, {
+                    completed: true,
+                    endTime: new Date().toISOString()
+                });
+            }
+            
+            document.getElementById('studySetup').style.display = 'none';
+            document.getElementById('studyRunning').style.display = 'none';
+            document.getElementById('studyCompleted').style.display = 'block';
+            document.getElementById('completionMessage').textContent = `Great work! You completed a ${studyState.duration}-minute study session.`;
+        }
+
+        function resetStudySession() {
+            studyState.mode = 'normal';
+            studyState.duration = 25;
+            studyState.timeRemaining = 0;
+            studyState.isRunning = false;
+            studyState.isPaused = false;
+            studyState.currentSession = null;
+            
+            if (studyState.intervalId) clearInterval(studyState.intervalId);
+            if (studyState.cameraStream) {
+                studyState.cameraStream.getTracks().forEach(track => track.stop());
+            }
+            
+            document.getElementById('studySetup').style.display = 'block';
+            document.getElementById('studyRunning').style.display = 'none';
+            document.getElementById('studyCompleted').style.display = 'none';
+            
+            document.querySelectorAll('.mode-option').forEach(el => el.classList.remove('selected'));
+            document.querySelector('.mode-option').classList.add('selected');
+            
+            document.querySelectorAll('.duration-buttons button').forEach(btn => btn.classList.remove('selected'));
+            document.querySelectorAll('.duration-buttons button')[0].classList.add('selected');
+            
+            document.getElementById('pauseResumeBtn').textContent = '⏸ Pause';
+            document.getElementById('timerLabel').textContent = 'Remaining';
+        }
+
+        // ============ CAMERA ============
+        studyState.cameraStream = null;
+
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+                studyState.cameraStream = stream;
+                const video = document.getElementById('cameraVideo');
+                video.srcObject = stream;
+                
+                // Simple face detection simulation
+                setInterval(() => {
+                    if (studyState.isRunning && studyState.mode === 'camera') {
+                        studyState.faceDetected = Math.random() > 0.1; // 90% chance of detection
+                        updateFaceDetectionUI();
+                    }
+                }, 2000);
+            } catch (err) {
+                console.error('Camera error:', err);
+            }
+        }
+
+        function updateFaceDetectionUI() {
+            const dot = document.getElementById('faceDetectionDot');
+            const text = document.getElementById('faceDetectionText');
+            const overlay = document.getElementById('focusLostOverlay');
+            const cameraBox = document.getElementById('cameraBox');
+            
+            if (studyState.faceDetected) {
+                dot.className = 'face-detection-dot detected';
+                text.textContent = 'Face Detected';
+                overlay.style.display = 'none';
+                cameraBox.classList.remove('focus-lost');
+                studyState.focusLost = false;
+            } else {
+                dot.className = 'face-detection-dot not-detected';
+                text.textContent = 'No Face Detected';
+                overlay.style.display = 'flex';
+                cameraBox.classList.add('focus-lost');
+                studyState.focusLost = true;
+            }
+        }
+
+        // ============ TASKS ============
+        let taskFilter = 'all';
+
+        function addTask() {
+            const title = document.getElementById('taskTitle').value.trim();
+            if (!title) return;
+            
+            const task = {
+                id: generateId(),
+                title,
+                category: document.getElementById('taskCategory').value.trim() || 'General',
+                dueDate: document.getElementById('taskDueDate').value || undefined,
+                completed: false,
+                createdAt: new Date().toISOString()
+            };
+            
+            storage.addTask(task);
+            document.getElementById('taskTitle').value = '';
+            document.getElementById('taskCategory').value = '';
+            document.getElementById('taskDueDate').value = '';
+            
+            renderTasks();
+            renderCalendar(); // Re-render calendar to show new task dates
+        }
+
+        function toggleTask(id) {
+            const tasks = storage.getTasks();
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                storage.updateTask(id, { completed: !task.completed });
+                renderTasks();
+            }
+        }
+
+        function deleteTask(id) {
+            storage.deleteTask(id);
+            renderTasks();
+        }
+
+        function filterTasks(filter) {
+            taskFilter = filter;
+            document.querySelectorAll('.filter-buttons button').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            renderTasks();
+        }
+
+        function renderTasks() {
+            const tasks = storage.getTasks();
+            const filtered = tasks.filter(t => {
+                if (taskFilter === 'active') return !t.completed;
+                if (taskFilter === 'completed') return t.completed;
+                return true;
+            });
+            
+            const completed = tasks.filter(t => t.completed).length;
+            const total = tasks.length;
+            const percentage = total > 0 ? (completed / total) * 100 : 0;
+            
+            document.getElementById('progressText').textContent = `${completed} of ${total} tasks completed`;
+            document.getElementById('progressFill').style.width = percentage + '%';
+            
+            const taskList = document.getElementById('taskList');
+            if (filtered.length === 0) {
+                taskList.innerHTML = `<div class="empty-state">No ${taskFilter === 'all' ? '' : taskFilter} tasks.</div>`;
+                return;
+            }
+            
+            taskList.innerHTML = filtered.map(task => `
+                <div class="task-item ${task.completed ? 'completed' : ''}">
+                    <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}')">
+                    <div class="task-content">
+                        <div class="task-title">${task.title}</div>
+                        <div class="task-meta">
+                            <span class="badge">${task.category}</span>
+                            ${task.dueDate ? `<span class="badge">📅 ${new Date(task.dueDate).toLocaleDateString()}</span>` : ''}
+                        </div>
+                    </div>
+                    <button class="task-delete" onclick="deleteTask('${task.id}')">🗑️</button>
+                </div>
+            `).join('');
+        }
+
+        // ============ CALCULATOR ============
+        let calcState = {
+            display: '0',
+            equation: '',
+            isNewNumber: true
+        };
+
+        function calcNumber(num) {
+            if (calcState.isNewNumber) {
+                calcState.display = num;
+                calcState.isNewNumber = false;
+            } else {
+                calcState.display = calcState.display === '0' ? num : calcState.display + num;
+            }
+            updateCalcDisplay();
+        }
+
+        function calcOperator(op) {
+            calcState.equation = calcState.display + ' ' + op + ' ';
+            calcState.isNewNumber = true;
+            updateCalcDisplay();
+        }
+
+        function calcDecimal() {
+            if (!calcState.display.includes('.')) {
+                calcState.display += '.';
+                calcState.isNewNumber = false;
+                updateCalcDisplay();
+            }
+        }
+
+        function calcEquals() {
+            if (!calcState.equation) return;
+            
+            try {
+                const fullEquation = calcState.equation + calcState.display;
+                const result = Function(`'use strict'; return (${fullEquation.replace(/×/g, '*').replace(/÷/g, '/')})`)();
+                calcState.display = String(result);
+                calcState.equation = '';
+                calcState.isNewNumber = true;
+                updateCalcDisplay();
+            } catch (err) {
+                calcState.display = 'Error';
+                calcState.equation = '';
+                calcState.isNewNumber = true;
+                updateCalcDisplay();
+            }
+        }
+
+        function calcClear() {
+            calcState.display = '0';
+            calcState.equation = '';
+            calcState.isNewNumber = true;
+            updateCalcDisplay();
+        }
+
+        function updateCalcDisplay() {
+            document.getElementById('calcEquation').textContent = calcState.equation;
+            document.getElementById('calcDisplay').textContent = calcState.display;
+        }
+
+        // ============ KNOWLEDGE TREE (New Section) ============
+        let treeState = {
+            isRunning: false,
+            elapsedSeconds: 0,
+            intervalId: null
+        };
+
+        const treeStages = [
+            { min: 0, label: "Seedling", icon: "🌱" },
+            { min: 10, label: "Sprout", icon: "🌿" },
+            { min: 30, label: "Sapling", icon: "🌲" },
+            { min: 60, label: "Young Tree", icon: "🌳" },
+            { min: 120, label: "Ancient Oak", icon: "👑🌳" }
+        ];
+
+        function toggleTreeSession() {
+            if (!treeState.isRunning) {
+                // Start the session
+                treeState.isRunning = true;
+                document.getElementById('treeStartBtn').textContent = '⏸ Pause Reading';
+                document.getElementById('treeTimerLabel').textContent = 'Current Session';
+                document.getElementById('treeResetBtn').style.display = 'none';
+
+                treeState.intervalId = setInterval(() => {
+                    treeState.elapsedSeconds++;
+                    updateTreeTimerDisplay(treeState.elapsedSeconds);
+                    updateTreeGrowthVisual(treeState.elapsedSeconds);
+                }, 1000);
+            } else {
+                // Pause the session - save the elapsed time to cumulative storage
+                let totalReadingTime = JSON.parse(localStorage.getItem('totalReadingTime') || '0');
+                totalReadingTime += treeState.elapsedSeconds;
+                localStorage.setItem('totalReadingTime', JSON.stringify(totalReadingTime));
+                
+                clearInterval(treeState.intervalId);
+                treeState.isRunning = false;
+                treeState.elapsedSeconds = 0; // Reset session time
+                document.getElementById('treeStartBtn').textContent = '▶ Resume Reading';
+                document.getElementById('treeTimerDisplay').textContent = '00:00';
+                document.getElementById('treeTimerLabel').textContent = 'Session Paused';
+                document.getElementById('treeResetBtn').style.display = 'inline-block';
+                updateTreeGrowthVisual(0); // Update visual with total stored time
+            }
+        }
+
+        function updateTreeTimerDisplay(seconds) {
+            const timeStr = formatTimeRemaining(seconds);
+            document.getElementById('treeTimerDisplay').textContent = timeStr;
+
+            const circumference = 2 * Math.PI * 133;
+            // Full circle is irrelevant for a continuous timer, but using 1 hour (3600s) as a reference for rotation
+            const durationRef = 3600; 
+            const offset = circumference - ((seconds % durationRef / durationRef) * circumference);
+            document.getElementById('treeProgressCircle').style.strokeDashoffset = offset;
+        }
+
+        function updateTreeGrowthVisual(currentSessionSeconds) {
+            const totalReadingTime = JSON.parse(localStorage.getItem('totalReadingTime') || '0');
+            const totalSeconds = totalReadingTime + currentSessionSeconds;
+            const totalMinutes = Math.floor(totalSeconds / 60);
+
+            // Update Tree Status (visual part of the tree)
+            const currentStage = treeStages.slice().reverse().find(stage => totalMinutes >= stage.min) || treeStages[0];
+            document.getElementById('treeStatus').textContent = `${currentStage.label} (${totalMinutes} mins total)`;
+            document.getElementById('treeIcon').textContent = currentStage.icon;
+            
+            // Update Progress Bar (conceptual growth towards the next stage)
+            const currentStageIndex = treeStages.findIndex(stage => stage.label === currentStage.label);
+            const nextStage = treeStages[currentStageIndex + 1];
+            let progressPercent = 100;
+
+            if (nextStage) {
+                const minutesInStage = nextStage.min - currentStage.min;
+                const minutesElapsedInStage = totalMinutes - currentStage.min;
+                progressPercent = (minutesElapsedInStage / minutesInStage) * 100;
+            }
+
+            document.getElementById('treeGrowthFill').style.width = `${Math.min(100, progressPercent)}%`;
+        }
+
+        function resetTreeSession() {
+            if (treeState.intervalId) clearInterval(treeState.intervalId);
+            treeState.isRunning = false;
+            treeState.elapsedSeconds = 0;
+            localStorage.setItem('totalReadingTime', '0'); // Reset total cumulative time
+            document.getElementById('treeStartBtn').textContent = '▶ Start Reading';
+            document.getElementById('treeTimerDisplay').textContent = '00:00';
+            document.getElementById('treeTimerLabel').textContent = 'Current Session';
+            document.getElementById('treeResetBtn').style.display = 'none';
+            updateTreeGrowthVisual(0);
+        }
+
+        // Initial setup for the tree
+        updateTreeGrowthVisual(0);
+
+
+        // ============ CALENDAR ============
+        let calendarState = {
+            currentDate: new Date(),
+            selectedDate: null
+        };
+
+        function renderCalendar() {
+            const year = calendarState.currentDate.getFullYear();
+            const month = calendarState.currentDate.getMonth();
+            
+            document.getElementById('monthYear').textContent = 
+                calendarState.currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startingDayOfWeek = firstDay.getDay();
+            
+            const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            let html = '';
+            
+            weekDays.forEach(day => {
+                html += `<div class="calendar-header">${day}</div>`;
+            });
+            
+            for (let i = 0; i < startingDayOfWeek; i++) {
+                html += `<div class="calendar-day other-month"></div>`;
+            }
+            
+            const sessions = storage.getSessions();
+            const today = new Date();
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                const dateStr = formatDate(date);
+                const hasSessions = sessions.some(s => s.date === dateStr);
+                const isToday = date.toDateString() === today.toDateString();
+                const isSelected = calendarState.selectedDate === dateStr;
+                
+                html += `
+                    <button class="calendar-day ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${hasSessions ? 'has-session' : ''}"
+                            onclick="selectCalendarDate('${dateStr}')">
+                        ${day}
+                    </button>
+                `;
+            }
+            
+            document.getElementById('calendarGrid').innerHTML = html;
+            updateCalendarStats();
+            renderSessionDetails();
+        }
+
+        function selectCalendarDate(dateStr) {
+            calendarState.selectedDate = dateStr;
+            renderCalendar();
+        }
+
+        function calendarToday() {
+            calendarState.currentDate = new Date();
+            renderCalendar();
+        }
+
+        function calendarPrevMonth() {
+            calendarState.currentDate.setMonth(calendarState.currentDate.getMonth() - 1);
+            renderCalendar();
+        }
+
+        function calendarNextMonth() {
+            calendarState.currentDate.setMonth(calendarState.currentDate.getMonth() + 1);
+            renderCalendar();
+        }
+
+        function updateCalendarStats() {
+            const sessions = storage.getSessions();
+            const today = new Date();
+            const weekStart = new Date(today);
+            weekStart.setDate(today.getDate() - today.getDay());
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 6);
+            
+            const weekSessions = sessions.filter(s => {
+                const sDate = new Date(s.date);
+                return sDate >= weekStart && sDate <= weekEnd;
+            });
+            
+            const monthSessions = sessions.filter(s => {
+                const sDate = new Date(s.date);
+                return sDate.getMonth() === calendarState.currentDate.getMonth() &&
+                       sDate.getFullYear() === calendarState.currentDate.getFullYear();
+            });
+            
+            const weekTotal = weekSessions.reduce((sum, s) => sum + s.duration, 0);
+            const monthTotal = monthSessions.reduce((sum, s) => sum + s.duration, 0);
+            const completedSessions = sessions.filter(s => s.completed).length;
+            
+            document.getElementById('weekTotal').textContent = formatDuration(weekTotal);
+            document.getElementById('monthTotal').textContent = formatDuration(monthTotal);
+            document.getElementById('totalSessions').textContent = completedSessions;
+        }
+
+        // MODIFIED to include Tasks
+        function renderSessionDetails() {
+            if (!calendarState.selectedDate) {
+                document.getElementById('sessionDetails').innerHTML = '';
+                return;
+            }
+            
+            const sessions = storage.getSessions().filter(s => s.date === calendarState.selectedDate);
+            // New: Filter tasks that have a dueDate matching the selected date
+            const tasks = storage.getTasks().filter(t => t.dueDate === calendarState.selectedDate); 
+            
+            let html = '';
+            
+            // 1. Render Tasks for the day
+            if (tasks.length > 0) {
+                html += `
+                    <div class="card" style="margin-bottom: 1.5rem;">
+                        <h3 style="margin-bottom: 1rem;">📅 Tasks Due on ${new Date(calendarState.selectedDate).toLocaleDateString()}</h3>
+                        <div style="display: grid; gap: 0.75rem;">
+                            ${tasks.map(t => `
+                                <div class="session-item" style="background-color: hsl(var(--accent) / 0.1);">
+                                    <div>
+                                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.25rem;">
+                                            <span class="badge" style="background-color: hsl(var(--accent)); color: hsl(var(--accent-foreground));">${t.category}</span>
+                                            ${t.completed ? '<span class="badge success">✓ Completed</span>' : ''}
+                                        </div>
+                                        <p style="font-size: 1rem; font-weight: 500;">${t.title}</p>
+                                    </div>
+                                    <div style="color: ${t.completed ? 'hsl(120 50% 50%)' : 'hsl(var(--muted-foreground))'}; font-weight: bold;">
+                                        ${t.completed ? 'Done' : 'Pending'}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 2. Render Study Sessions
+            if (sessions.length > 0) {
+                html += `
+                    <div class="card">
+                        <h3 style="margin-bottom: 1rem;">📚 Study Sessions on ${new Date(calendarState.selectedDate).toLocaleDateString()}</h3>
+                        <div style="display: grid; gap: 0.75rem;">
+                            ${sessions.map(s => `
+                                <div class="session-item">
+                                    <div>
+                                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.25rem;">
+                                            <span class="badge ${s.completed ? 'primary' : ''}">${s.mode === 'camera' ? '📷 Camera' : '⏱️ Normal'}</span>
+                                            ${s.completed ? '<span class="badge success">✓ Completed</span>' : ''}
+                                        </div>
+                                        <p style="font-size: 0.875rem; color: hsl(var(--muted-foreground));">
+                                            Started: ${new Date(s.startTime).toLocaleTimeString()}
+                                        </p>
+                                    </div>
+                                    <div class="session-duration">${s.duration}m</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (sessions.length === 0 && tasks.length === 0) {
+                document.getElementById('sessionDetails').innerHTML = `<div class="empty-state">No sessions or tasks recorded for this day.</div>`;
+                return;
+            }
+            
+            document.getElementById('sessionDetails').innerHTML = html;
+        }
+
+        // ============ INITIALIZATION ============
+        initTheme();
+        renderTasks();
+        renderCalendar();
+    </script>
+</body>
+</html>
